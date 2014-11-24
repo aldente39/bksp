@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 
     clock_t start, end;
     start = clock();
-    dblbicgstab(&mat, &B, 4, 1.0e-14, 500, &X);
+    dblbicgstab(&mat, &B, 1.0e-14, 500, &X);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
             (double)(end-start)/CLOCKS_PER_SEC);
