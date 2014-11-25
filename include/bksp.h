@@ -43,3 +43,5 @@ int dblbicgstab(dspmat *A, dmat *B,
 int dblbicgstabl(dspmat *A, dmat *B, int l,
                 double tol, int max_iter, dmat *X);
 
+int dshbicg(dspmat *A, double *b, double *sigma, int sigma_size,
+                double tol, int max_iter, double *x);

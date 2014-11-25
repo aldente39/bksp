@@ -15,6 +15,35 @@ double fnorm(dspmat m) {
     return sqrt(n);
 }
 
+double norm_true_res(dspmat *A, double *b, double *x) {
+    double ans;
+    int n = *(A->row_size);
+    double *tmp = (double *) malloc(n * sizeof(double));
+    mkl_cspblas_dcsrgemv("n", A->row_size, A->value,
+                         A->I, A->J, x, tmp);
+    cblas_dscal(n, -1, tmp, 1);
+    cblas_daxpy(n, 1, b, 1, tmp, 1);
+    ans = cblas_dnrm2(n, tmp, 1) / cblas_dnrm2(n, b, 1);
+    
+    free(tmp);
+    return ans;
+}
+
+double norm_true_res_shift(dspmat *A, double *b, double sigma, double *x) {
+    double ans;
+    int n = *(A->row_size);
+    double *tmp = (double *) malloc(n * sizeof(double));
+    mkl_cspblas_dcsrgemv("n", A->row_size, A->value,
+                         A->I, A->J, x, tmp);
+    cblas_dscal(n, -1, tmp, 1);
+    cblas_daxpy(n, 1, b, 1, tmp, 1);
+    cblas_daxpy(n, - sigma, x, 1, tmp, 1);
+    ans = cblas_dnrm2(n, tmp, 1) / cblas_dnrm2(n, b, 1);
+    
+    free(tmp);
+    return ans;
+}
+
 int main(int argc, char *argv[]) {
     if (argc < 2) {
         printf("input matrix file name.\n");
@@ -37,7 +66,7 @@ int main(int argc, char *argv[]) {
     printf("size: %d, %d \ntype: %s\n",
            *mat.row_size, *mat.col_size, mat.type);
 
-    int i;
+    int i, j;
     const int n = *mat.row_size;
     const int s = 16;
     double *bb = (double *)calloc(sizeof(double), n * s * sizeof(double));
@@ -70,6 +99,7 @@ int main(int argc, char *argv[]) {
     else {
         printf("The BiCG Method converged.\n");
     }
+    printf("The true residual norm : %e\n", norm_true_res(&mat, bb, xx));
     printf("\n");
    
     for (i = 0; i < n; i++) {
@@ -133,6 +163,28 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
 
+    double sigma[4] = {0, 0.2, 0.4, 0.8};
+    int sigma_num = 4;
+    double *sx = (double *)calloc(n * (sigma_num + 1), sizeof(double));
+    double *b = (double *)calloc(n, sizeof(double));
+    b[0] = 1;
+    start = clock();
+    code = dshbicg(&mat, b, sigma, sigma_num, 1.0e-14, 500, sx);
+    end = clock();
+    printf("Computation time ... %.2f sec.\n",
+           (double)(end-start)/CLOCKS_PER_SEC);
+    printf("2-norm at the seed system : %e\n", norm_true_res(&mat, b, &sx[0]));
+    for (i = 0; i < sigma_num; i++) {
+        printf("2-norm at sigma = %f : %e\n",
+                sigma[i], norm_true_res_shift(&mat, b, sigma[i], &sx[(i+1) * n]));
+    }
+    if (code < 0) {
+        printf("The Shifted BiCG Method did not converged.\n");
+    }
+    else {
+        printf("The Shifted BiCG Method converged.\n");
+    }
+    printf("\n");
 
     return 0;
 }
