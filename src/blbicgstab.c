@@ -100,6 +100,10 @@ int dblbicgstab (dspmat *A, dmat *B, double tol,
     free(P);
     free(beta);
     free(alpha);
+    
+    if (error >= tol) {
+        return -1;
+    }
     return 0;
 }
 

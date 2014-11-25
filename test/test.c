@@ -51,40 +51,88 @@ int main(int argc, char *argv[]) {
     copy_darray2mat('c', bb, &B);
     dmat X = make_dmat(n, s);
     double *xx = malloc(n * sizeof(double));
+    for (i = 0; i < n; i++) {
+        xx[i] = 0.0;
+    }
 
+    int code;
     clock_t start, end;
+    
     start = clock();
-    dblbicgstab(&mat, &B, 1.0e-14, 500, &X);
+    code = dbicg(&mat, bb, 1.0e-14, 500, xx);
+    end = clock();
+    printf("Computation time ... %.2f sec.\n",
+           (double)(end-start)/CLOCKS_PER_SEC);
+    printf("%f\n", cblas_dnrm2(n, xx, 1));
+    if (code < 0) {
+        printf("The BiCG Method did not converged.\n");
+    }
+    else {
+        printf("The BiCG Method converged.\n");
+    }
+    printf("\n");
+   
+    for (i = 0; i < n; i++) {
+        xx[i] = 0.0;
+    }
+    start = clock();
+    code = dbicgstab(&mat, bb, 1.0e-14, 500, xx);
+    end = clock();
+    printf("Computation time ... %.2f sec.\n",
+           (double)(end-start)/CLOCKS_PER_SEC);
+    printf("%f\n", cblas_dnrm2(n, xx, 1));
+    if (code < 0) {
+        printf("The BiCGSTAB Method did not converged.\n");
+    }
+    else {
+        printf("The BiCGSTAB Method converged.\n");
+    }
+    printf("\n");
+    
+    for (i = 0; i < n; i++) {
+        xx[i] = 0.0;
+    }
+    start = clock();
+    code = dbicgstabl(&mat, bb, 4, 1.0e-14, 500, xx);
+    end = clock();
+    printf("Computation time ... %.2f sec.\n",
+           (double)(end-start)/CLOCKS_PER_SEC);
+    printf("%f\n", cblas_dnrm2(n, xx, 1));
+    if (code < 0) {
+        printf("The BiCGSTAB(l) Method did not converged.\n");
+    }
+    else {
+        printf("The BiCGSTAB(l) Method converged.\n");
+    }
+    printf("\n");
+    
+    start = clock();
+    code = dblbicgstab(&mat, &B, 1.0e-14, 500, &X);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
             (double)(end-start)/CLOCKS_PER_SEC);
+    if (code < 0) {
+        printf("The Block BiCGSTAB Method did not converged.\n");
+    }
+    else {
+        printf("The Block BiCGSTAB Method converged.\n");
+    }
+    printf("\n");
+    
     dmat XX = make_dmat(n, s);
     start = clock();
-    dblbicgstabl(&mat, &B, 6, 1.0e-14, 500, &XX);
+    code = dblbicgstabl(&mat, &B, 6, 1.0e-14, 500, &XX);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
             (double)(end-start)/CLOCKS_PER_SEC);
-
-
-    char *matdescra = "GLNF";
-    int m = *mat.row_size;
-    int L = 4;
-    double *tmp = (double *)malloc(m * L * sizeof(double));
-    double *g = (double *)calloc(sizeof(double),m * L * sizeof(double));
-    for (i = 0; i < L; i++) {
-        g[(m + 1) * i] = 1;
+    if (code < 0) {
+        printf("The Block BiCGSTAB(l) Method did not converged.\n");
     }
+    else {
+        printf("The Block BiCGSTAB(l) Method converged.\n");
+    }
+    printf("\n");
 
-    double one = 1;
-    double zero = 0;
-    int *row_ptr = malloc((m + 1) * sizeof(int));
-    for (i = 0; i < m + 1; i++) {
-        row_ptr[i] = mat.I[i] + 1;
-    }
-    int *col_ind = malloc(*mat.nnz * sizeof(int));
-    for (i = 0; i < *mat.nnz; i++) {
-        col_ind[i] = mat.J[i] + 1;
-    }
 
     return 0;
 }

@@ -62,6 +62,10 @@ int dbicg (dspmat *mat, double *b,
     free(sr);
     free(r_old);
     free(sr_old);
+    
+    if (error >= tol) {
+        return -1;
+    }
     return 0;
 }
 

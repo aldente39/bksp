@@ -65,6 +65,11 @@ int dbicgstab(dspmat *mat, double *b, double tol,
     free(p);
     free(s);
     free(r_old);
+    free(rs);
+    
+    if (error >= tol) {
+        return -1;
+    }
     return 0;
 }
 

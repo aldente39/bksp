@@ -232,6 +232,10 @@ int dblbicgstabl (dspmat *A, dmat *B, int l, double tol,
     free(gamma0);
     free(t);
     free(xi);
+    
+    if (error >= tol) {
+        return -1;
+    }
     return 0;
 }
 

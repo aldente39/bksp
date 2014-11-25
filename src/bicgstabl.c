@@ -130,6 +130,10 @@ int dbicgstabl (dspmat *A, double *b, int l, double tol,
         free(r[i]);
     }
     free(p[0]);
+    
+    if (error >= tol) {
+        return -1;
+    }
     return 0;
 }
 
