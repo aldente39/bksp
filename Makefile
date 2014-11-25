@@ -5,7 +5,7 @@ TARGET = lib$(LIB)
 INCLUDE_DIR = include
 LIBRARY_DIR = lib
 SOURCE_DIR = src
-BUILD_DIR = debug
+BUILD_DIR = lib
 TEST_DIR = test
 SRCS = $(shell cd ./$(SOURCE_DIR) && ls *.c && cd ../)
 OBJS = $(SRCS:.c=.o)
