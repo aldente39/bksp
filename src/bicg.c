@@ -71,7 +71,6 @@ int dbicg (dspmat *mat, double *b,
     }
 
     ////////// Finalization //////////
-    printf("%d, %e\n",i,error);
     free(tmp);
     free(atp);
     free(ap);
