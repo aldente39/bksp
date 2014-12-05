@@ -22,6 +22,14 @@ int free_dmat (dmat *mat) {
     return 0;
 }
 
+int darray2dmat (double *arr, int row_size, int col_size, dmat *mat) {
+    mat->row_size = row_size;
+    mat->col_size = col_size;
+    mat->value = arr;
+
+    return 0;
+}
+
 int copy_darray2mat (char type, double *arr, dmat *mat) {
     if (type == 'c') {
         int i, mn;

@@ -98,7 +98,15 @@ dspmat read_matrix_market(char *filename){
     mat.row_size = row_size;
     mat.col_size = col_size;
     mat.value = val;
-    mat.type = "coo";
+    mat.format = "coo";
+    if (matcode[3] == 'S') {
+        mat.type = "symmetric";
+    }
+    else {
+        mat.type = "unsymmetric";
+    }
+
+    coo2csr(&mat);
 
     return mat;
 }
@@ -124,7 +132,7 @@ int coo2csr(dspmat *mat) {
     mat->I = ia;
     mat->J = ja;
     mat->value = Acsr;
-    mat->type = "csr";
+    mat->format = "csr";
 
     return 0;
 }
