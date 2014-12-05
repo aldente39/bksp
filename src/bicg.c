@@ -80,8 +80,8 @@ int dbicg (dspmat *mat, double *b,
     free(r);
     
     if (error >= tol) {
-        return -1;
+        return NOT_CONVERGED;
     }
-    return 0;
+    return i;
 }
 

@@ -4,24 +4,33 @@ LIB = bksp
 TARGET = lib$(LIB)
 INCLUDE_DIR = include
 LIBRARY_DIR = lib
-SOURCE_DIR = src
+SRC_DIR = src
 BUILD_DIR = lib
-TEST_DIR = test
-SRCS = $(shell cd ./$(SOURCE_DIR) && ls *.c && cd ../)
-OBJS = $(SRCS:.c=.o)
+OBJ_DIR = objs
+TEST_DIR = tests
+SRCS := $(wildcard ./src/*.c)
+OBJS := $(patsubst ./src%, ./objs%, $(SRCS:.c=.o))
 
-all : $(BUILD_DIR) $(patsubst %,$(BUILD_DIR)/%,$(TARGET))
+all : $(BUILD_DIR) $(OBJ_DIR) $(OBJS) $(BUILD_DIR)/$(TARGET)
+
+$(OBJ_DIR) :
+	mkdir -p $(OBJ_DIR)
 
 $(BUILD_DIR) :
-	mkdir $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)
 
-$(BUILD_DIR)/$(TARGET) : $(patsubst %,$(SOURCE_DIR)/%,$(SRCS))
-	$(CC) -shared -fPIC $(CFLAGS) -I./$(INCLUDE_DIR) -o $@.so $^
+$(BUILD_DIR)/$(TARGET) : $(OBJS)
+	ar rcs ./$(BUILD_DIR)/$(TARGET).a $(OBJS)
 
-.PHONY : test
-test :
-	$(CC) $(CFLAGS) -p -I./$(INCLUDE_DIR) -o ./$(TEST_DIR)/test ./$(TEST_DIR)/test.c -L./$(BUILD_DIR) -lbksp
+./$(OBJ_DIR)/%.o : ./$(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) -c -p -I./$(INCLUDE_DIR) -o $@ ./$(SRC_DIR)/$(@F:.o=.c)
+
+test : ./$(TEST_DIR)/test.c
+	$(CC) $(CFLAGS) -p -I./$(INCLUDE_DIR) -o ./$(TEST_DIR)/test ./$(TEST_DIR)/test.c -L./$(BUILD_DIR)/ -lbksp
 
 clean :
-	rm ./$(BUILD_DIR)/*.so
+	rm -rf ./$(BUILD_DIR)/
+	rm -rf ./$(OBJ_DIR)/
+
+.PHONY : clean all
 

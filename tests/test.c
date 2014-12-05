@@ -79,22 +79,19 @@ int main(int argc, char *argv[]) {
     //copy_darray2mat('c', bb, &B);
     darray2dmat(bb, n, s, &B);
     dmat X = make_dmat(n, s);
-    double *xx = malloc(n * sizeof(double));
-    for (i = 0; i < n; i++) {
-        xx[i] = 0.0;
-    }
 
     int code;
     clock_t start, end;
     
-    char f2[] = "../testmat/crystm01.mtx";
+    char f2[] = "../testmat/bfwb398.mtx";
     dspmat m2 = read_matrix_market(f2);
     printf("%e, %s\n", sp_norm_f(&m2), m2.type);
-    double *b = (double *)calloc(*m2.row_size, sizeof(double));
+    double *b = (double *)calloc(n, sizeof(double));
     b[0] = 1;
     double *x2 = (double *)calloc(*m2.row_size, sizeof(double));
 
 
+    // A test for the CG method.
     start = clock();
     code = bksp_dcg(&m2, b, 1.0e-14, 500, x2);
     end = clock();
@@ -112,7 +109,8 @@ int main(int argc, char *argv[]) {
     printf("\n");
 
 
-    for (i = 0; i < n; i++) {
+    // A test for the CR method.
+    for (i = 0; i < *m2.row_size; i++) {
         x2[i] = 0.0;
     }
     start = clock();
@@ -132,9 +130,8 @@ int main(int argc, char *argv[]) {
     printf("\n");
     
 
-    for (i = 0; i < n; i++) {
-        xx[i] = 0.0;
-    }
+    // A test for the BiCG method.
+    double *xx = (double *)calloc(n, sizeof(double));
     start = clock();
     code = dbicg(&mat, b, 1.0e-14, 500, xx);
     end = clock();
@@ -145,12 +142,13 @@ int main(int argc, char *argv[]) {
         printf("The BiCG Method did not converged.\n");
     }
     else {
-        printf("The BiCG Method converged.\n");
+        printf("The BiCG Method converged at iteration %d.\n", code);
     }
     printf("The true residual norm : %e\n", norm_true_res(&mat, b, xx));
     printf("\n");
    
 
+    // A test for the BiCGSTAB test.
     for (i = 0; i < n; i++) {
         xx[i] = 0.0;
     }
@@ -169,6 +167,7 @@ int main(int argc, char *argv[]) {
     printf("\n");
     
 
+    // A test for the BiCGSTAB(l) method.
     for (i = 0; i < n; i++) {
         xx[i] = 0.0;
     }
@@ -187,6 +186,7 @@ int main(int argc, char *argv[]) {
     printf("\n");
     
 
+    // A test for the Block BiCgSTAB method.
     start = clock();
     code = dblbicgstab(&mat, &B, 1.0e-14, 500, &X);
     end = clock();
@@ -201,6 +201,7 @@ int main(int argc, char *argv[]) {
     printf("\n");
     
 
+    // A test for the Block BiCGSTAB(l) method.
     dmat XX = make_dmat(n, s);
     start = clock();
     code = dblbicgstabl(&mat, &B, 6, 1.0e-14, 500, &XX);
@@ -216,6 +217,7 @@ int main(int argc, char *argv[]) {
     printf("\n");
 
 
+    // A test for the Shifted BiCG method.
     double sigma[4] = {0, 0.2, 0.4, 0.8};
     int sigma_num = 4;
     double *sx = (double *)calloc(n * (sigma_num + 1), sizeof(double));
