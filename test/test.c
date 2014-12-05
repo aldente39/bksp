@@ -5,21 +5,25 @@
 #include <time.h>
 #include <string.h>
 
-double fnorm(dspmat m) {
-    double n = 0;
-    int i;
-    int end = *m.nnz;
-    for(i = 0; i < end; i++) {
-        n += m.value[i] * m.value[i];
-    }
-    return sqrt(n);
-}
-
 double norm_true_res(dspmat *A, double *b, double *x) {
     double ans;
     int n = *(A->row_size);
     double *tmp = (double *) malloc(n * sizeof(double));
     mkl_cspblas_dcsrgemv("n", A->row_size, A->value,
+                         A->I, A->J, x, tmp);
+    cblas_dscal(n, -1, tmp, 1);
+    cblas_daxpy(n, 1, b, 1, tmp, 1);
+    ans = cblas_dnrm2(n, tmp, 1) / cblas_dnrm2(n, b, 1);
+    
+    free(tmp);
+    return ans;
+}
+
+double norm_true_res_symmetric(dspmat *A, double *b, double *x) {
+    double ans;
+    int n = *(A->row_size);
+    double *tmp = (double *) malloc(n * sizeof(double));
+    mkl_cspblas_dcsrsymv("l", A->row_size, A->value,
                          A->I, A->J, x, tmp);
     cblas_dscal(n, -1, tmp, 1);
     cblas_daxpy(n, 1, b, 1, tmp, 1);
@@ -53,16 +57,11 @@ int main(int argc, char *argv[]) {
     char f[] = "";
     strcat(f, argv[1]);
     dspmat mat;
-    int ret;
     mat = read_matrix_market(f);
-    printf("fnorm is %f\n", fnorm(mat));
+    printf("fnorm is %f\n", sp_norm_f(&mat));
     printf("size: %d, %d \ntype: %s\n",
-           *mat.row_size, *mat.col_size, mat.type);
-
-    ret = coo2csr(&mat);
-
-    printf("%d\n",ret);
-    printf("fnorm is %f\n", fnorm(mat));
+           *mat.row_size, *mat.col_size, mat.format);
+    printf("fnorm is %f\n", sp_norm_f(&mat));
     printf("size: %d, %d \ntype: %s\n",
            *mat.row_size, *mat.col_size, mat.type);
 
@@ -76,8 +75,9 @@ int main(int argc, char *argv[]) {
         bb[(n + 1) * i] = 1;
     }
     dmat B;
-    B = make_dmat(n, s);
-    copy_darray2mat('c', bb, &B);
+    //B = make_dmat(n, s);
+    //copy_darray2mat('c', bb, &B);
+    darray2dmat(bb, n, s, &B);
     dmat X = make_dmat(n, s);
     double *xx = malloc(n * sizeof(double));
     for (i = 0; i < n; i++) {
@@ -87,8 +87,56 @@ int main(int argc, char *argv[]) {
     int code;
     clock_t start, end;
     
+    char f2[] = "../testmat/crystm01.mtx";
+    dspmat m2 = read_matrix_market(f2);
+    printf("%e, %s\n", sp_norm_f(&m2), m2.type);
+    double *b = (double *)calloc(*m2.row_size, sizeof(double));
+    b[0] = 1;
+    double *x2 = (double *)calloc(*m2.row_size, sizeof(double));
+
+
     start = clock();
-    code = dbicg(&mat, bb, 1.0e-14, 500, xx);
+    code = bksp_dcg(&m2, b, 1.0e-14, 500, x2);
+    end = clock();
+    printf("Computation time ... %.2f sec.\n",
+           (double)(end-start)/CLOCKS_PER_SEC);
+    printf("%f\n", cblas_dnrm2(*m2.row_size, x2, 1));
+    if (code < 0) {
+        printf("The CG Method did not converged.\n");
+    }
+    else {
+        printf("The CG Method converged at iteration %d.\n", code);
+    }
+    printf("The true residual norm : %e\n",
+           norm_true_res_symmetric(&m2, b, x2));
+    printf("\n");
+
+
+    for (i = 0; i < n; i++) {
+        x2[i] = 0.0;
+    }
+    start = clock();
+    code = dcr(&m2, b, 1.0e-14, 500, x2);
+    end = clock();
+    printf("Computation time ... %.2f sec.\n",
+           (double)(end-start)/CLOCKS_PER_SEC);
+    printf("%f\n", cblas_dnrm2(*m2.row_size, x2, 1));
+    if (code < 0) {
+        printf("The CR Method did not converged.\n");
+    }
+    else {
+        printf("The CR Method converged at iteration %d.\n", code);
+    }
+    printf("The true residual norm : %e\n",
+           norm_true_res_symmetric(&m2, b, x2));
+    printf("\n");
+    
+
+    for (i = 0; i < n; i++) {
+        xx[i] = 0.0;
+    }
+    start = clock();
+    code = dbicg(&mat, b, 1.0e-14, 500, xx);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
            (double)(end-start)/CLOCKS_PER_SEC);
@@ -99,14 +147,15 @@ int main(int argc, char *argv[]) {
     else {
         printf("The BiCG Method converged.\n");
     }
-    printf("The true residual norm : %e\n", norm_true_res(&mat, bb, xx));
+    printf("The true residual norm : %e\n", norm_true_res(&mat, b, xx));
     printf("\n");
    
+
     for (i = 0; i < n; i++) {
         xx[i] = 0.0;
     }
     start = clock();
-    code = dbicgstab(&mat, bb, 1.0e-14, 500, xx);
+    code = dbicgstab(&mat, b, 1.0e-14, 500, xx);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
            (double)(end-start)/CLOCKS_PER_SEC);
@@ -119,11 +168,12 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
     
+
     for (i = 0; i < n; i++) {
         xx[i] = 0.0;
     }
     start = clock();
-    code = dbicgstabl(&mat, bb, 4, 1.0e-14, 500, xx);
+    code = dbicgstabl(&mat, b, 4, 1.0e-14, 500, xx);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
            (double)(end-start)/CLOCKS_PER_SEC);
@@ -136,6 +186,7 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
     
+
     start = clock();
     code = dblbicgstab(&mat, &B, 1.0e-14, 500, &X);
     end = clock();
@@ -149,6 +200,7 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
     
+
     dmat XX = make_dmat(n, s);
     start = clock();
     code = dblbicgstabl(&mat, &B, 6, 1.0e-14, 500, &XX);
@@ -163,11 +215,10 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
 
+
     double sigma[4] = {0, 0.2, 0.4, 0.8};
     int sigma_num = 4;
     double *sx = (double *)calloc(n * (sigma_num + 1), sizeof(double));
-    double *b = (double *)calloc(n, sizeof(double));
-    b[0] = 1;
     start = clock();
     code = dshbicg(&mat, b, sigma, sigma_num, 1.0e-14, 500, sx);
     end = clock();
