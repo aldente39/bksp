@@ -239,6 +239,50 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
 
+
+    // A test for the Shifted BiCGSTAB(l) method.
+    //double sigma[4] = {0, 0.2, 0.4, 0.8};
+    //int sigma_num = 4;
+    free(sx);
+    sx = (double *)calloc(n * (sigma_num + 1), sizeof(double));
+    start = clock();
+    code = dshbicgstabl(&mat, b, 1, sigma, sigma_num, 1.0e-14, 200, sx);
+    end = clock();
+    printf("Computation time ... %.2f sec.\n",
+           (double)(end-start)/CLOCKS_PER_SEC);
+    printf("2-norm at the seed system : %e\n", norm_true_res(&mat, b, &sx[0]));
+    for (i = 0; i < sigma_num; i++) {
+        printf("2-norm at sigma = %f : %e\n",
+                sigma[i], norm_true_res_shift(&mat, b, sigma[i], &sx[(i+1) * n]));
+    }
+    if (code < 0) {
+        printf("The Shifted BiCGSTAB(l) Method did not converged.\n");
+    }
+    else {
+        printf("The Shifted BiCGSTAB(l) Method converged at iteration %d.\n", code);
+    }
+    printf("\n");
+
+    /*
+    double ***aaa = malloc(3 * sizeof(double));
+    double **aa = malloc(3 * 4 * sizeof(double *));
+    double *a = malloc(4 * 12 * sizeof(double));
+    for(i=0;i<12;i++){
+        aa[i] = &a[4 * i];
+    }
+    for (i =0;i<48;i++){
+        a[i] = i+1;
+    }
+    for(i=0;i<3;i++){
+        aaa[i] = &aa[i * 4];
+    }
+    for(i=0;i<4;i++){
+        for(j=0;j<4;j++){
+            printf("%f ", aaa[0][j][i]);
+        }
+        printf("\n");
+    }*/
+
     return 0;
 }
 

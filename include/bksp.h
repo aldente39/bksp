@@ -1,11 +1,13 @@
 
 ////////// ERROR CODE //////////
+
 #define NOT_CONVERGED -1;
 #define DIVERGENCE -2;
 #define INVALID_PARAMETERS -3;
 #define INVALID_MATRIX_TYPE -4;
 //typedef int ERROR_CODE;
 
+////////// Structs //////////
 
 typedef struct {
     int *I; /// Information about row
@@ -28,7 +30,7 @@ typedef struct {
 ////////// Utilities //////////
 
 dspmat read_matrix_market(char *filename);
-int coo2csr(dspmat *mat);
+//int coo2csr(dspmat *mat);
 int myqr(int m, int n, double *mat, double *r);
 dmat make_dmat(int m, int n);
 int darray2dmat(double *arr, int row_size, int col_size, dmat *mat);
@@ -68,6 +70,8 @@ int dblbicgstabl(dspmat *A, dmat *B, int l,
 int dshbicg(dspmat *A, double *b, double *sigma, int sigma_size,
                 double tol, int max_iter, double *x);
 //TODO dshbicgstabl 
+int dshbicgstabl(dspmat *A, double *b, int l, double *sigma,
+                 int sigma_size, double tol, int max_iter, double *x);
 
 
 ////////// Block Krylov subspace methods for shifted systems //////////
