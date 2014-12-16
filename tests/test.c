@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
     //B = make_dmat(n, s);
     //copy_darray2mat('c', bb, &B);
     darray2dmat(bb, n, s, &B);
-    dmat X = make_dmat(n, s);
+    dmat *X = dmat_create(n, s);
 
     int code;
     clock_t start, end;
@@ -128,6 +128,29 @@ int main(int argc, char *argv[]) {
     printf("The true residual norm : %e\n",
            norm_true_res_symmetric(&m2, b, x2));
     printf("\n");
+
+
+    // A test for the Block CG method.
+    int vn = 16;
+    dmat *B_CG = dmat_create(*m2.row_size, vn);
+    dmat *X_CG = dmat_create(*m2.row_size, vn);
+    for (i = 0; i < vn; i++) {
+        dmat_set(i, i, B_CG, 1.0);
+    }
+    start = clock();
+    code = dblcg(&m2, B_CG, 1.0e-14, 500, X_CG);
+    end = clock();
+    printf("Computation time ... %.2f sec.\n",
+            (double)(end-start)/CLOCKS_PER_SEC);
+    if (code < 0) {
+        printf("The Block CG Method did not converged.\n");
+    }
+    else {
+        printf("The Block CG Method converged at iteration %d.\n", code);
+    }
+    printf("\n");
+    dmat_free(B_CG);
+    dmat_free(X_CG);
     
 
     // A test for the BiCG method.
@@ -186,9 +209,9 @@ int main(int argc, char *argv[]) {
     printf("\n");
     
 
-    // A test for the Block BiCgSTAB method.
+    // A test for the Block BiCGSTAB method.
     start = clock();
-    code = dblbicgstab(&mat, &B, 1.0e-14, 500, &X);
+    code = dblbicgstab(&mat, &B, 1.0e-14, 500, X);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
             (double)(end-start)/CLOCKS_PER_SEC);
@@ -202,9 +225,9 @@ int main(int argc, char *argv[]) {
     
 
     // A test for the Block BiCGSTAB(l) method.
-    dmat XX = make_dmat(n, s);
+    dmat *XX = dmat_create(n, s);
     start = clock();
-    code = dblbicgstabl(&mat, &B, 6, 1.0e-14, 500, &XX);
+    code = dblbicgstabl(&mat, &B, 6, 1.0e-14, 500, XX);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
             (double)(end-start)/CLOCKS_PER_SEC);
