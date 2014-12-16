@@ -1,21 +1,21 @@
 #include "bksp.h"
 
-dmat make_dmat (int m, int n) {
+dmat *dmat_create (int m, int n) {
     int i, l;
     l = m * n;
-    dmat mat;
+    dmat *mat = (dmat *)malloc(sizeof(dmat));
     double *value = (double *)malloc(m * n * sizeof(double));
     for (i = 0; i < l; i++) {
         value[i] = 0;
     }
-    mat.row_size = m;
-    mat.col_size = n;
-    mat.value = value;
+    mat->row_size = m;
+    mat->col_size = n;
+    mat->value = value;
 
     return mat;
 }
 
-int free_dmat (dmat *mat) {
+int dmat_free (dmat *mat) {
     free(mat->value);
     free(mat);
 
@@ -65,9 +65,5 @@ int dvec2mat (double *x, int m, dmat *mat) {
     return 0;
 }
 
-int set_dmat (int m, int n, dmat *mat, double num) {
-    mat->value[n * mat->row_size + m] = num;
 
-    return 0;
-}
 
