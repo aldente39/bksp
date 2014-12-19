@@ -27,28 +27,35 @@ typedef struct {
 } dmat;
 
 
+static inline int dspmat_rowsize(dspmat *mat) {
+    return *mat->row_size;
+}
 
-static inline int dmat_set (int m, int n, dmat *mat, double num) {
+static inline int dspmat_colsize(dspmat *mat) {
+    return *mat->col_size;
+}
+
+static inline int dmat_set (dmat *mat, int m, int n, double num) {
     mat->value[n * mat->row_size + m] = num;
 
     return 0;
 }
 
-static inline double dmat_get (int m, int n, dmat *mat) {
+static inline double dmat_get (dmat *mat, int m, int n) {
     return mat->value[n * mat->row_size + m];
 }
 
 ////////// Utilities //////////
 
-dspmat read_matrix_market(char *filename);
+dspmat *read_matrix_market(char *filename);
 //int coo2csr(dspmat *mat);
 int myqr(int m, int n, double *mat, double *r);
 dmat *dmat_create(int m, int n);
 int darray2dmat(double *arr, int row_size, int col_size, dmat *mat);
 int dmat_free(dmat *mat);
 int dvec2mat(double *x, int m, dmat *mat);
-static inline int dmat_set(int m, int n, dmat *mat, double num);
-static inline double dmat_get(int m, int n, dmat *mat);
+//static inline int dmat_set(int m, int n, dmat *mat, double num);
+//static inline double dmat_get(int m, int n, dmat *mat);
 
 double sp_norm_f(dspmat *A);
 

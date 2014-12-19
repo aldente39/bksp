@@ -56,17 +56,16 @@ int main(int argc, char *argv[]) {
 
     char f[] = "";
     strcat(f, argv[1]);
-    dspmat mat;
-    mat = read_matrix_market(f);
-    printf("fnorm is %f\n", sp_norm_f(&mat));
+    dspmat *mat = read_matrix_market(f);
+    printf("fnorm is %f\n", sp_norm_f(mat));
     printf("size: %d, %d \ntype: %s\n",
-           *mat.row_size, *mat.col_size, mat.format);
-    printf("fnorm is %f\n", sp_norm_f(&mat));
+           *mat->row_size, *mat->col_size, mat->format);
+    printf("fnorm is %f\n", sp_norm_f(mat));
     printf("size: %d, %d \ntype: %s\n",
-           *mat.row_size, *mat.col_size, mat.type);
+           *mat->row_size, *mat->col_size, mat->type);fflush(stdout);
 
     int i, j;
-    const int n = *mat.row_size;
+    const int n = dspmat_rowsize(mat);
     const int s = 16;
     double *bb = (double *)calloc(sizeof(double), n * s * sizeof(double));
     int seed[4] = {1,0,3,2};
@@ -84,20 +83,20 @@ int main(int argc, char *argv[]) {
     clock_t start, end;
     
     char f2[] = "../testmat/bfwb398.mtx";
-    dspmat m2 = read_matrix_market(f2);
-    printf("%e, %s\n", sp_norm_f(&m2), m2.type);
+    dspmat *m2 = read_matrix_market(f2);
+    printf("%e, %s\n", sp_norm_f(m2), m2->type);
     double *b = (double *)calloc(n, sizeof(double));
     b[0] = 1;
-    double *x2 = (double *)calloc(*m2.row_size, sizeof(double));
+    double *x2 = (double *)calloc(*m2->row_size, sizeof(double));
 
 
     // A test for the CG method.
     start = clock();
-    code = bksp_dcg(&m2, b, 1.0e-14, 500, x2);
+    code = bksp_dcg(m2, b, 1.0e-14, 500, x2);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
            (double)(end-start)/CLOCKS_PER_SEC);
-    printf("%f\n", cblas_dnrm2(*m2.row_size, x2, 1));
+    printf("%f\n", cblas_dnrm2(*m2->row_size, x2, 1));
     if (code < 0) {
         printf("The CG Method did not converged.\n");
     }
@@ -105,20 +104,20 @@ int main(int argc, char *argv[]) {
         printf("The CG Method converged at iteration %d.\n", code);
     }
     printf("The true residual norm : %e\n",
-           norm_true_res_symmetric(&m2, b, x2));
+           norm_true_res_symmetric(m2, b, x2));
     printf("\n");
 
 
     // A test for the CR method.
-    for (i = 0; i < *m2.row_size; i++) {
+    for (i = 0; i < *m2->row_size; i++) {
         x2[i] = 0.0;
     }
     start = clock();
-    code = dcr(&m2, b, 1.0e-14, 500, x2);
+    code = dcr(m2, b, 1.0e-14, 500, x2);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
            (double)(end-start)/CLOCKS_PER_SEC);
-    printf("%f\n", cblas_dnrm2(*m2.row_size, x2, 1));
+    printf("%f\n", cblas_dnrm2(*m2->row_size, x2, 1));
     if (code < 0) {
         printf("The CR Method did not converged.\n");
     }
@@ -126,19 +125,19 @@ int main(int argc, char *argv[]) {
         printf("The CR Method converged at iteration %d.\n", code);
     }
     printf("The true residual norm : %e\n",
-           norm_true_res_symmetric(&m2, b, x2));
+           norm_true_res_symmetric(m2, b, x2));
     printf("\n");
 
 
     // A test for the Block CG method.
     int vn = 16;
-    dmat *B_CG = dmat_create(*m2.row_size, vn);
-    dmat *X_CG = dmat_create(*m2.row_size, vn);
+    dmat *B_CG = dmat_create(*m2->row_size, vn);
+    dmat *X_CG = dmat_create(*m2->row_size, vn);
     for (i = 0; i < vn; i++) {
-        dmat_set(i, i, B_CG, 1.0);
+        dmat_set(B_CG, i, i, 1.0);
     }
     start = clock();
-    code = dblcg(&m2, B_CG, 1.0e-14, 500, X_CG);
+    code = dblcg(m2, B_CG, 1.0e-14, 500, X_CG);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
             (double)(end-start)/CLOCKS_PER_SEC);
@@ -156,7 +155,7 @@ int main(int argc, char *argv[]) {
     // A test for the BiCG method.
     double *xx = (double *)calloc(n, sizeof(double));
     start = clock();
-    code = dbicg(&mat, b, 1.0e-14, 500, xx);
+    code = dbicg(mat, b, 1.0e-14, 500, xx);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
            (double)(end-start)/CLOCKS_PER_SEC);
@@ -167,7 +166,7 @@ int main(int argc, char *argv[]) {
     else {
         printf("The BiCG Method converged at iteration %d.\n", code);
     }
-    printf("The true residual norm : %e\n", norm_true_res(&mat, b, xx));
+    printf("The true residual norm : %e\n", norm_true_res(mat, b, xx));
     printf("\n");
    
 
@@ -176,7 +175,7 @@ int main(int argc, char *argv[]) {
         xx[i] = 0.0;
     }
     start = clock();
-    code = dbicgstab(&mat, b, 1.0e-14, 500, xx);
+    code = dbicgstab(mat, b, 1.0e-14, 500, xx);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
            (double)(end-start)/CLOCKS_PER_SEC);
@@ -195,7 +194,7 @@ int main(int argc, char *argv[]) {
         xx[i] = 0.0;
     }
     start = clock();
-    code = dbicgstabl(&mat, b, 4, 1.0e-14, 500, xx);
+    code = dbicgstabl(mat, b, 4, 1.0e-14, 500, xx);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
            (double)(end-start)/CLOCKS_PER_SEC);
@@ -211,7 +210,7 @@ int main(int argc, char *argv[]) {
 
     // A test for the Block BiCGSTAB method.
     start = clock();
-    code = dblbicgstab(&mat, &B, 1.0e-14, 500, X);
+    code = dblbicgstab(mat, &B, 1.0e-14, 500, X);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
             (double)(end-start)/CLOCKS_PER_SEC);
@@ -227,7 +226,7 @@ int main(int argc, char *argv[]) {
     // A test for the Block BiCGSTAB(l) method.
     dmat *XX = dmat_create(n, s);
     start = clock();
-    code = dblbicgstabl(&mat, &B, 6, 1.0e-14, 500, XX);
+    code = dblbicgstabl(mat, &B, 6, 1.0e-14, 500, XX);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
             (double)(end-start)/CLOCKS_PER_SEC);
@@ -245,14 +244,14 @@ int main(int argc, char *argv[]) {
     int sigma_num = 4;
     double *sx = (double *)calloc(n * (sigma_num + 1), sizeof(double));
     start = clock();
-    code = dshbicg(&mat, b, sigma, sigma_num, 1.0e-14, 500, sx);
+    code = dshbicg(mat, b, sigma, sigma_num, 1.0e-14, 500, sx);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
            (double)(end-start)/CLOCKS_PER_SEC);
-    printf("2-norm at the seed system : %e\n", norm_true_res(&mat, b, &sx[0]));
+    printf("2-norm at the seed system : %e\n", norm_true_res(mat, b, &sx[0]));
     for (i = 0; i < sigma_num; i++) {
         printf("2-norm at sigma = %f : %e\n",
-                sigma[i], norm_true_res_shift(&mat, b, sigma[i], &sx[(i+1) * n]));
+                sigma[i], norm_true_res_shift(mat, b, sigma[i], &sx[(i+1) * n]));
     }
     if (code < 0) {
         printf("The Shifted BiCG Method did not converged.\n");
@@ -269,14 +268,14 @@ int main(int argc, char *argv[]) {
     free(sx);
     sx = (double *)calloc(n * (sigma_num + 1), sizeof(double));
     start = clock();
-    code = dshbicgstabl(&mat, b, 1, sigma, sigma_num, 1.0e-14, 200, sx);
+    code = dshbicgstabl(mat, b, 1, sigma, sigma_num, 1.0e-14, 200, sx);
     end = clock();
     printf("Computation time ... %.2f sec.\n",
            (double)(end-start)/CLOCKS_PER_SEC);
-    printf("2-norm at the seed system : %e\n", norm_true_res(&mat, b, &sx[0]));
+    printf("2-norm at the seed system : %e\n", norm_true_res(mat, b, &sx[0]));
     for (i = 0; i < sigma_num; i++) {
         printf("2-norm at sigma = %f : %e\n",
-                sigma[i], norm_true_res_shift(&mat, b, sigma[i], &sx[(i+1) * n]));
+                sigma[i], norm_true_res_shift(mat, b, sigma[i], &sx[(i+1) * n]));
     }
     if (code < 0) {
         printf("The Shifted BiCGSTAB(l) Method did not converged.\n");

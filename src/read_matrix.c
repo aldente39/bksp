@@ -28,15 +28,16 @@
 #include "mmio.h"
 #include "bksp.h"
 
-dspmat read_matrix_market(char *filename){
+dspmat *read_matrix_market(char *filename){
     int ret_code;
     MM_typecode matcode;
     FILE *f;
     int M, N, nz;   
     int i, *I, *J;
     double *val;
-    dspmat mat;
+    dspmat *mat;
     int *row_size, *col_size, *nnz;
+    mat = (dspmat *)malloc(sizeof(dspmat));
     nnz = (int *) malloc(sizeof(int));
     row_size = (int *) malloc(sizeof(int));
     col_size = (int *) malloc(sizeof(int));
@@ -92,21 +93,21 @@ dspmat read_matrix_market(char *filename){
     *row_size = M;
     *col_size = N;
     *nnz = nz;
-    mat.I = I;
-    mat.J = J;
-    mat.nnz = nnz;
-    mat.row_size = row_size;
-    mat.col_size = col_size;
-    mat.value = val;
-    mat.format = "coo";
+    mat->I = I;
+    mat->J = J;
+    mat->nnz = nnz;
+    mat->row_size = row_size;
+    mat->col_size = col_size;
+    mat->value = val;
+    mat->format = "coo";
     if (matcode[3] == 'S') {
-        mat.type = "symmetric";
+        mat->type = "symmetric";
     }
     else {
-        mat.type = "unsymmetric";
+        mat->type = "unsymmetric";
     }
 
-    coo2csr(&mat);
+    coo2csr(mat);
 
     return mat;
 }
