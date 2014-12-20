@@ -22,19 +22,22 @@ int dblcg (dspmat *A, dmat *B, double tol,
     int i, m, n;
     double omega, fnb, error;
     char *matdescra = "SLNF";
-    double *alpha, *beta, *C;
-    double *P, *V, *ap;
+    double *alpha, *beta, *C, *base0;
+    double *P, *V, *ap, *tmp, *base1;
     int *row_ptr, *col_ind, *ipiv;
     m = *A->row_size;
     n = B->col_size;
     error = 0;
-    alpha = (double *)malloc(n * n * sizeof(double));
-    beta = (double *)malloc(n * n * sizeof(double));
-    C = (double *)malloc(n * n * sizeof(double));
-    P = (double *)malloc(m * n * sizeof(double));
-    V = (double *)malloc(m * n * sizeof(double));
-    ap = (double *)malloc(m * n * sizeof(double));
-    ipiv = (int *)malloc(n * n * sizeof(int));
+    base0 = (double *)malloc(n * n * 3 * sizeof(double));
+    alpha = base0;
+    beta = &base0[n * n];
+    C = &base0[n * n * 2];
+    base1 = (double *)malloc(m * n * 4 * sizeof(double));
+    P = base1;
+    V = &base1[m * n];
+    ap = &base1[m * n * 2];
+    tmp = &base1[m * n * 3];
+    ipiv = (int *)malloc(n * n * sizeof(double));
     row_ptr = (int *)malloc((m + 1) * sizeof(int));
     col_ind = (int *)malloc((*A->nnz) * sizeof(int));
     for (i = 0; i <= m; i++) {
@@ -44,7 +47,6 @@ int dblcg (dspmat *A, dmat *B, double tol,
         col_ind[i] = A->J[i] + 1;
     }
 
-    double *tmp = (double *) malloc(m * n * sizeof(double));
     double one = 1;
     double mone = -1;
     double zero = 0;
@@ -103,14 +105,11 @@ int dblcg (dspmat *A, dmat *B, double tol,
     }
 
     ////////// Finalization //////////
-    free(tmp);
+    free(base1);
+    free(base0);
     free(ipiv);
-    free(ap);
-    free(V);
-    free(C);
-    free(P);
-    free(beta);
-    free(alpha);
+    free(col_ind);
+    free(row_ptr);
     
     if (error >= tol) {
         return NOT_CONVERGED;
