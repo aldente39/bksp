@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
         printf("The BiCGSTAB Method did not converged.\n");
     }
     else {
-        printf("The BiCGSTAB Method converged.\n");
+        printf("The BiCGSTAB Method converged at iteration %d.\n", code);
     }
     printf("\n");
     
@@ -218,7 +218,7 @@ int main(int argc, char *argv[]) {
         printf("The Block BiCGSTAB Method did not converged.\n");
     }
     else {
-        printf("The Block BiCGSTAB Method converged.\n");
+        printf("The Block BiCGSTAB Method converged at iteration %d.\n", code);
     }
     printf("\n");
     

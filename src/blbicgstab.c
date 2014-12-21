@@ -12,37 +12,54 @@
 
 int dblbicgstab (dspmat *A, dmat *B, double tol,
                         int max_iter, dmat *X) {
+    ////////// Initialization //////////
     int i, m, n;
     double omega, fnb, error;
-    char *matdescra = "GLNC";
-    double *alpha, *beta;
-    double *P, *R, *Rs, *V, *T;
-    int *ipiv;
+    char *matdescra = "GLNF";
+    double *alpha, *beta, *base0;
+    double *P, *R, *Rs, *V, *T, *tmp, *base1;
+    int *row_ptr, *col_ind, *ipiv;
     m = *A->row_size;
     n = B->col_size;
     error = 0;
-    alpha = (double *)malloc(n * n * sizeof(double));
-    beta = (double *)malloc(n * n * sizeof(double));
-    P = (double *)malloc(m * n * sizeof(double));
-    R = (double *)malloc(m * n * sizeof(double));
-    Rs = (double *)malloc(m * n * sizeof(double));
-    V = (double *)malloc(m * n * sizeof(double));
-    T = (double *)malloc(m * n * sizeof(double));
+    base0 = (double *)malloc(n * n * 2 * sizeof(double));
+    alpha = base0;
+    beta = &base0[n * n];
+    base1 = (double *)malloc(m * n * 6 * sizeof(double));
+    P = base1;
+    R = &base1[m * n];
+    Rs = &base1[m * n * 2];
+    V = &base1[m * n * 3];
+    T = &base1[m * n * 4];
+    tmp = &base1[m * n * 5];
     ipiv = (int *)malloc(n * n * sizeof(int));
+    row_ptr = (int *)malloc((m + 1) * sizeof(int));
+    col_ind = (int *)malloc((*A->nnz) * sizeof(int));
+    for (i = 0; i <= m; i++) {
+        row_ptr[i] = A->I[i] + 1;
+    }
+    for (i = 0; i < *A->nnz; i++) {
+        col_ind[i] = A->J[i] + 1;
+    }
 
-    double *tmp = (double *) malloc(m * n * sizeof(double));
+    double one = 1;
     double mone = -1;
     double zero = 0;
-    dcsrmm0('n', m, n, A->value, A->I, A->J, *A->nnz, X->value, tmp);
+    //dcsrmm0('n', m, n, A->value, A->I, A->J, *A->nnz, X->value, tmp);
+    mkl_dcsrmm("n", &m, &n, &m, &mone, matdescra, A->value,
+               col_ind, row_ptr, &row_ptr[1], X->value, &m, &zero, tmp, &m);
     cblas_daxpy(m * n, 1, B->value, 1, tmp, 1);
     cblas_dcopy(m * n, tmp, 1, R, 1);
     cblas_dcopy(m * n, R, 1, P, 1);
     cblas_dcopy(m * n, R, 1, Rs, 1);
     fnb = cblas_dnrm2(m * n, B->value, 1);
 
+    ////////// Iteration //////////
     for (i = 0; i < max_iter; i++) {
         // Compute V = A * P.
-        dcsrmm0('n', m, n, A->value, A->I, A->J, *A->nnz, P, V);
+        //dcsrmm0('n', m, n, A->value, A->I, A->J, *A->nnz, P, V);
+        mkl_dcsrmm("n", &m, &n, &m, &one, matdescra, A->value,
+            col_ind, row_ptr, &row_ptr[1], P, &m, &zero, V, &m);
 
         // Compute alpha.
         cblas_dgemm(CblasColMajor, CblasTrans, CblasNoTrans,
@@ -56,7 +73,8 @@ int dblbicgstab (dspmat *A, dmat *B, double tol,
                     m, n, n, -1, V, m, alpha, n, 1, R, m);
 
         // Compute T = A * R, where R is the intermediate residual.
-        dcsrmm0('n', m, n, A->value, A->I, A->J, *A->nnz, R, T);
+        mkl_dcsrmm("n", &m, &n, &m, &one, matdescra, A->value,
+            col_ind, row_ptr, &row_ptr[1], R, &m, &zero, T, &m);
 
         // Compute omega.
         omega = cblas_ddot(m * n, T, 1, R, 1) /
@@ -90,20 +108,17 @@ int dblbicgstab (dspmat *A, dmat *B, double tol,
             break;
         }
     }
-    printf("%d, %e\n", i, error);
 
-    free(tmp);
+    ////////// Finalization //////////
+    free(row_ptr);
+    free(col_ind);
     free(ipiv);
-    free(T);
-    free(V);
-    free(Rs);
-    free(P);
-    free(beta);
-    free(alpha);
+    free(base1);
+    free(base0);
     
     if (error >= tol) {
-        return -1;
+        return NOT_CONVERGED;
     }
-    return 0;
+    return i;
 }
 
