@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
         printf("The BiCGSTAB(l) Method did not converged.\n");
     }
     else {
-        printf("The BiCGSTAB(l) Method converged.\n");
+        printf("The BiCGSTAB(l) Method converged at iteration %d.\n", code);
     }
     printf("\n");
     

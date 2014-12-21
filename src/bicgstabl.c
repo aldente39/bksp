@@ -10,30 +10,35 @@
 
 int dbicgstabl (dspmat *A, double *b, int l, double tol,
                                        int max_iter, double *x) {
+    ////////// Initialization //////////
     int i, j, m, info;
     int l2 = l + 1;
     double error = 0;
     double beta, *omega, gamma1, fnb;
     double alpha = 0;
     double gamma0 = 1;
-    double **r, *rs, **p;
-    double *sigma, *tau, *omega_d, *omega_dd, t_local;
+    double **r, **p, **index;
+    double *rs, *tmp, *base;
+    double *sigma, *tau, *omega_d, *omega_dd, *omega_base, t_local;
     MKL_INT n = *A->row_size;
-    r = malloc(l2 * sizeof(double));
-    p = malloc(l2 * sizeof(double));
+    index = (double **)malloc(l2 * 2 * sizeof(double *));
+    r = index;
+    p = &index[l2];
+    base = (double *)malloc(n * (l2 * 2 + 2) * sizeof(double));
     for (i = 0; i < l2; i++) {
-        r[i] = (double *) malloc(n * sizeof(double));
-        p[i] = (double *) malloc(n * sizeof(double));
+        r[i] = &base[n * i];
+        p[i] = &base[n * (l2 + i)];
     }
-    rs = (double *) malloc(n * sizeof(double));
-    omega = (double *) malloc(l2 * sizeof(double));
+    rs = &base[n * l2 * 2];
+    tmp = &base[n * (l2 * 2 + 1)];
+    omega_base = (double *)malloc(l2 * 4 * sizeof(double));
+    omega = omega_base;
     omega[l] = 1;
-    omega_d = (double *) malloc(l2 * sizeof(double));
-    omega_dd = (double *) malloc(l2 * sizeof(double));
-    sigma = (double *) malloc(l2 * sizeof(double));
+    omega_d = &omega_base[l2];
+    omega_dd = &omega_base[l2 * 2];
+    sigma = &omega_base[l2 * 3];
     tau = (double *) malloc(l2 * l2 * sizeof(double));
 
-    double *tmp = (double *) malloc(n * sizeof(double));
     mkl_cspblas_dcsrgemv("n", A->row_size, A->value,
                             A->I, A->J, x, tmp);
     cblas_dscal(n, -1, tmp, 1);
@@ -43,6 +48,7 @@ int dbicgstabl (dspmat *A, double *b, int l, double tol,
     cblas_dcopy(n, r[0], 1, rs, 1);
     fnb = cblas_dnrm2(n, b, 1);
 
+    ////////// Iteration //////////
     for (m = 0; m < max_iter; m++) {
         // BiCG Part
 
@@ -116,24 +122,16 @@ int dbicgstabl (dspmat *A, double *b, int l, double tol,
             break;
         }
     }
-    printf("%d, %e\n", m, error);
 
-    free(tmp);
+    ////////// Finalization //////////
     free(tau);
-    free(sigma);
-    free(omega_dd);
-    free(omega_d);
-    free(omega);
-    free(rs);
-    for (i = 1; i < l2; i++) {
-        free(p[i]);
-        free(r[i]);
-    }
-    free(p[0]);
+    free(omega_base);
+    free(base);
+    free(index);
     
     if (error >= tol) {
-        return -1;
+        return NOT_CONVERGED;
     }
-    return 0;
+    return m;
 }
 
