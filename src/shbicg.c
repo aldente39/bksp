@@ -8,16 +8,16 @@ int dshbicg (dspmat *mat, double *b, double *sigma,
     int i, k;
     double error = 0;
     double alpha, beta, alpha_old, rho, rho_old, fnb;
-    double *r, *sr, *p, *sp, *ap, *atp;
+    double *r, *sr, *p, *sp, *ap, *atp, *tmp, *base;
     MKL_INT n = *mat->row_size;
-    r = (double *) malloc(n * sizeof(double));
-    sr = (double *) malloc(n * sizeof(double));
-    p = (double *) calloc(n, sizeof(double));
-    sp = (double *) calloc(n, sizeof(double));
-    ap = (double *) malloc(n * sizeof(double));
-    atp = (double *) malloc(n * sizeof(double));
-
-    double *tmp = (double *) malloc(n * sizeof(double));
+    base = (double *) calloc(n * 7, sizeof(double));
+    r = base;
+    sr = &base[n];
+    p = &base[n * 2];
+    sp = &base[n * 3];
+    ap = &base[n * 4];
+    atp = &base[n * 5];
+    tmp = &base[n * 6];
     mkl_cspblas_dcsrgemv("n", mat->row_size, mat->value,
                    mat->I, mat->J, x, tmp);
     cblas_dscal(n, -1, tmp, 1);
@@ -29,11 +29,12 @@ int dshbicg (dspmat *mat, double *b, double *sigma,
     rho_old = 1;
     
     // For shifted systems
-    double *alpha_shift = (double *)malloc(sigma_size * sizeof(double));
-    double *beta_shift = (double *)malloc(sigma_size * sizeof(double));
-    double *pi_shift = (double *)malloc(sigma_size * sizeof(double));
-    double *pi_shift_new = (double *)malloc(sigma_size * sizeof(double));
-    double *pi_shift_old = (double *)malloc(sigma_size * sizeof(double));
+    double *shift_base = (double *)malloc(sigma_size * 5 * sizeof(double));
+    double *alpha_shift = shift_base;
+    double *beta_shift = &shift_base[sigma_size];
+    double *pi_shift = &shift_base[sigma_size * 2];
+    double *pi_shift_new = &shift_base[sigma_size * 3];
+    double *pi_shift_old = &shift_base[sigma_size * 4];
     double **p_shift = (double **)malloc(sigma_size * sizeof(double *));
     double **x_shift = (double **)malloc(sigma_size * sizeof(double *));
     double *p_shift_base = (double *)calloc(n * sigma_size, sizeof(double));
@@ -115,20 +116,15 @@ int dshbicg (dspmat *mat, double *b, double *sigma,
     }
 
     // ********** Finalization **********
-    free(tmp);
-    free(atp);
-    free(ap);
-    free(sp);
-    free(p);
-    free(sr);
-    free(alpha_shift);
-    free(beta_shift);
-    free(pi_shift);
-    free(pi_shift_old);
-    free(pi_shift_new);
+    free(base);
+    free(shift_base);
+    free(p_shift);
+    free(x_shift);
+    free(p_shift_base);
     
     if (error >= tol) {
-        return -1;
+        return NOT_CONVERGED;
     }
-    return 0;
+    return i;
 }
+
