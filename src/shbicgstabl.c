@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <mkl.h>
+#include "bksp_internal.h"
 #include "bksp.h"
 
 // Horner's scheme
@@ -64,7 +64,7 @@ int dshbicgstabl (dspmat *mat, double *b, int l, double *sigma,
 
     double *tmp = (double *) malloc(n * sizeof(double));
     mkl_cspblas_dcsrgemv("n", mat->row_size, mat->value,
-                         mat->I, mat->J, x, tmp);
+                         mat->row, mat->col, x, tmp);
     cblas_dscal(n, -1, tmp, 1);
     cblas_daxpy(n, 1, b, 1, tmp, 1);
     cblas_dcopy(n, tmp, 1, r[0], 1);
@@ -133,7 +133,7 @@ int dshbicgstabl (dspmat *mat, double *b, int l, double *sigma,
 
             // Compute p_{j, j+1}.
             mkl_cspblas_dcsrgemv("n", mat->row_size, mat->value,
-                                 mat->I, mat->J, p[j], p[j + 1]);
+                                 mat->row, mat->col, p[j], p[j + 1]);
 
             // Compute alpha.
             alpha = rho / cblas_ddot(n, rs, 1, p[j + 1], 1);
@@ -174,7 +174,7 @@ int dshbicgstabl (dspmat *mat, double *b, int l, double *sigma,
 
             // Compute r_{j+1, j+1}.
             mkl_cspblas_dcsrgemv("n", mat->row_size, mat->value,
-                                 mat->I, mat->J, r[j], r[j + 1]);
+                                 mat->row, mat->col, r[j], r[j + 1]);
 
             // Compute p_shift_{j, j+1} of shifted systems.
             for (k = 0; k < sigma_size; k++) {

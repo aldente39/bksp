@@ -1,4 +1,4 @@
-#include <mkl.h>
+#include "bksp_internal.h"
 //#include "bksp.h"
 
 int myqr (int m, int n, double *mat, double *r) {

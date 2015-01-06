@@ -16,8 +16,8 @@ double sp_norm_f_symmetric(dspmat *A) {
     int i, j;
     double tmp;
     int end = *A->nnz;
-    int *row_ind = A->I;
-    int *col_ptr = A->J;
+    int *row_ind = A->row;
+    int *col_ptr = A->col;
     int size = *A->row_size;
     for(i = 0; i < size; i++) {
         for (j = row_ind[i]; j < row_ind[i + 1]; j++) {

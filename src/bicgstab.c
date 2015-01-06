@@ -1,6 +1,6 @@
-#include <mkl.h>
 #include "bksp.h"
 #include <stdio.h>
+#include "bksp_internal.h"
 
 int dbicgstab(dspmat *mat, double *b, double tol,
                                        int max_iter, double *x) {
@@ -20,7 +20,7 @@ int dbicgstab(dspmat *mat, double *b, double tol,
     tmp = &base[n * 6];
 
     mkl_cspblas_dcsrgemv("n", mat->row_size, mat->value,
-                   mat->I, mat->J, x, tmp);
+                   mat->row, mat->col, x, tmp);
     cblas_dscal(n, -1, tmp, 1);
     cblas_daxpy(n, 1, b, 1, tmp, 1);
     cblas_dcopy(n, tmp, 1, r, 1);
@@ -32,14 +32,14 @@ int dbicgstab(dspmat *mat, double *b, double tol,
     ////////// Iteration //////////
     for (i = 0; i < max_iter; i++) {
         mkl_cspblas_dcsrgemv("n", mat->row_size, mat->value,
-                     mat->I, mat->J, p, ap);
+                     mat->row, mat->col, p, ap);
         alpha = rho / cblas_ddot(n, rs, 1, ap, 1);
 
         cblas_dcopy(n, r, 1, s, 1);
         cblas_daxpy(n, -alpha, ap, 1, s, 1);
 
         mkl_cspblas_dcsrgemv("n", mat->row_size, mat->value,
-                    mat->I, mat->J, s, as);
+                    mat->row, mat->col, s, as);
         omega = cblas_ddot(n, as, 1, s, 1) / cblas_ddot(n, as, 1, as, 1);
 
         cblas_daxpy(n, alpha, p, 1, x, 1);
