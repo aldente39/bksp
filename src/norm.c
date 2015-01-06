@@ -1,3 +1,5 @@
+#include <string.h>
+#include <math.h>
 #include "bksp.h"
 
 double sp_norm_f_unsymmetric (dspmat *A) {
@@ -15,7 +17,6 @@ double sp_norm_f_symmetric(dspmat *A) {
     double n = 0;
     int i, j;
     double tmp;
-    int end = *A->nnz;
     int *row_ind = A->row;
     int *col_ptr = A->col;
     int size = *A->row_size;

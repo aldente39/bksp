@@ -20,7 +20,7 @@ int dblcg (dspmat *A, dmat *B, double tol,
 
     ////////// Initialization //////////
     int i, m, n;
-    double omega, fnb, error;
+    double fnb, error;
     char *matdescra = "SLNF";
     double *alpha, *beta, *C, *base0;
     double *P, *V, *ap, *tmp, *base1;

@@ -113,9 +113,9 @@ dspmat *read_matrix_market(char *filename){
 }
 
 int coo2csr(dspmat *mat) {
-    MKL_INT *n, *ja, *ia, *nnz, *row_ind, *col_ind, info;
+    MKL_INT *n, *ja, *ia, *nnz, *row_ind, *col_ind;
     double *Acsr, *Acoo;
-    MKL_INT job[] = {1,0,0,0,*mat->nnz,0};
+    //MKL_INT job[] = {1,0,0,0,*mat->nnz,0};
     n = mat->row_size;
     ja = (int *)calloc((*mat->nnz), sizeof(int));
     ia = (int *)calloc((*n + 1), sizeof(int));

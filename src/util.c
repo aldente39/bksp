@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "bksp.h"
 
 dmat *dmat_create (int m, int n) {
@@ -40,7 +41,6 @@ int copy_darray2mat (char type, double *arr, dmat *mat) {
     }
     else if (type == 'r') {
         int i, j, m, n;
-        double tmp;
         m = mat->row_size;
         n = mat->col_size;
         for (i = 0; i < m; i++) {
