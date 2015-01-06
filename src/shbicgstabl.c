@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include "bksp_internal.h"
 #include "bksp.h"
 
