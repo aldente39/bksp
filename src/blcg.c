@@ -9,6 +9,7 @@
 
 #include "bksp_internal.h"
 #include <stdio.h>
+#include <string.h>
 #include "bksp.h"
 
 int dblcg (dspmat *A, dmat *B, double tol,
