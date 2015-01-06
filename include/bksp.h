@@ -10,8 +10,8 @@
 ////////// Structs //////////
 
 typedef struct {
-    int *I; /// Information about row
-    int *J; /// Information about column
+    int *row; /// Information about row
+    int *col; /// Information about column
     int *nnz;
     int *row_size;
     int *col_size;
