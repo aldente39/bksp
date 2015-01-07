@@ -50,7 +50,7 @@ $(BUILD_DIR)/$(TARGET) : $(OBJS)
 	ar rcs ./$(BUILD_DIR)/$(TARGET).a $(OBJS)
 
 ./$(OBJ_DIR)/%.o : ./$(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -c -I./$(INCLUDE_DIR) -o $@ ./$(SRC_DIR)/$(@F:.o=.c)
+	$(CC) $(CFLAGS) -c -fPIC -I./$(INCLUDE_DIR) -o $@ ./$(SRC_DIR)/$(@F:.o=.c)
 
 test : ./$(TEST_DIR)/test.c
 	$(CC) $(CFLAGS) -I./$(INCLUDE_DIR) -o ./$(TEST_DIR)/test ./$(TEST_DIR)/test.c -L$(CURRENT_DIR)/$(BUILD_DIR) -l$(LIB) $(OTHERLIBS) -lm
