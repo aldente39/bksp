@@ -16,6 +16,7 @@ nomkl =
 OTHERLIBS =
 OSX =
 DLIBTYPE = .so
+LD_ARG = -shared
 UNAME = $(shell uname -s)
 LAPACK_DIR = /usr/local/lib
 
@@ -23,6 +24,7 @@ ifeq ($(UNAME), Darwin)
 	OTHERLIBS = -framework Accelerate -L$(LAPACK_DIR) -llapacke
 	DLIBTYPE = .dylib
 	OSX = -DOSX
+	LD_ARG = -dylib
 else
 	OTHERLIBS = -lblas -llapacke
 endif
@@ -46,7 +48,7 @@ $(BUILD_DIR) :
 	mkdir -p $(BUILD_DIR)
 
 $(BUILD_DIR)/$(TARGET) : $(OBJS)
-	ld -shared -o ./$(BUILD_DIR)/$(TARGET)$(DLIBTYPE) $(OBJS) $(OTHERLIBS) -lc
+	ld $(LD_ARG) -o ./$(BUILD_DIR)/$(TARGET)$(DLIBTYPE) $(OBJS) $(OTHERLIBS) -lc
 	ar rcs ./$(BUILD_DIR)/$(TARGET).a $(OBJS)
 
 ./$(OBJ_DIR)/%.o : ./$(SRC_DIR)/%.c
