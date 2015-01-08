@@ -31,7 +31,7 @@ ifeq ($(nomkl), yes)
 	CFLAGS = $(FLAGS) -DNOMKL $(OSX)
 else
 	CFLAGS = $(FLAGS) -mkl $(OSX)
-	OTHERLIBS = 
+	OTHERLIBS = -L$(MKLROOT)/../compiler/lib/intel64  -L$(MKLROOT)/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -lpthread -liomp5
 endif
 
 
@@ -46,7 +46,7 @@ $(BUILD_DIR) :
 	mkdir -p $(BUILD_DIR)
 
 $(BUILD_DIR)/$(TARGET) : $(OBJS)
-	ld -shared -o ./$(BUILD_DIR)/$(TARGET)$(DLIBTYPE) $(OBJS) $(OTHERLIBS)
+	ld -shared -o ./$(BUILD_DIR)/$(TARGET)$(DLIBTYPE) $(OBJS) $(OTHERLIBS) -lc
 	ar rcs ./$(BUILD_DIR)/$(TARGET).a $(OBJS)
 
 ./$(OBJ_DIR)/%.o : ./$(SRC_DIR)/%.c
