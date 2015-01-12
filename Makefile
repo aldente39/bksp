@@ -1,5 +1,24 @@
+##### Please rewrite below parameters for your environment. #####
+
 CC = icc
 FLAGS = -O3 -openmp -Wall -g
+### if you don't want to use Intel MKL, rewrite "mkl = yes" to "mkl = no". 
+mkl = yes
+
+BLAS_DIR = /usr/local/lib
+LAPACK_DIR = /usr/local/lib
+
+### In Mac OSX, if you don't want to use blas provided by Apple,
+### rewrite "OSX_ACCE = yes" to "OSX_ACCE = no".
+OSX_ACCE = yes
+
+
+##### Please save below. #####
+
+OBJ_DIR = objs
+TEST_DIR = tests
+SRCS := $(wildcard ./src/*.c)
+OBJS := $(patsubst ./src%, ./objs%, $(SRCS:.c=.o))
 LIB = bksp
 TARGET = lib$(LIB)
 INCLUDE_DIR = include
@@ -7,29 +26,26 @@ LIBRARY_DIR = lib
 SRC_DIR = src
 BUILD_DIR = lib
 CURRENT_DIR = $(shell pwd)
-OBJ_DIR = objs
-TEST_DIR = tests
-SRCS := $(wildcard ./src/*.c)
-OBJS := $(patsubst ./src%, ./objs%, $(SRCS:.c=.o))
 
-nomkl =
 OTHERLIBS =
 OSX =
 DLIBTYPE = .so
 LD_ARG = -shared
 UNAME = $(shell uname -s)
-LAPACK_DIR = /usr/local/lib
+
 
 ifeq ($(UNAME), Darwin)
-	OTHERLIBS = -framework Accelerate -L$(LAPACK_DIR) -llapacke
+	ifeq ($(OSX_ACCE), yes)
+		OTHERLIBS = -framework Accelerate -L$(LAPACK_DIR) -llapacke
+	endif
 	DLIBTYPE = .dylib
 	OSX = -DOSX
 	LD_ARG = -dylib
 else
-	OTHERLIBS = -lblas -llapacke
+	OTHERLIBS =  -L$(BLAS_DIR) -lblas -L$(LAPACK_DIR) -llapacke
 endif
 
-ifeq ($(nomkl), yes)
+ifeq ($(mkl), no)
 	CFLAGS = $(FLAGS) -DNOMKL $(OSX)
 else
 	CFLAGS = $(FLAGS) -mkl $(OSX)
