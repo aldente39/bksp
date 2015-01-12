@@ -13,7 +13,7 @@ make
 Makefileを適宜書き換えてblasとlapackのパスを通してください．
 mklを使わない場合は
 
-make nomkl=yes
+make mkl=no
 
 でビルド可能です．
 
@@ -24,6 +24,28 @@ CC=gcc
 
 等と書くとそのコンパイラでビルドします．
 
+Mac OSXでも動作します．こちらもデフォルトではmklを使用します．
+また，blasについては，デフォルトではXcodeに付属する
+blas(Accelerateフレームワーク)を使用します．
+lapackについては別途必要になります．
+(本ライブラリで使用しているのはlapackeで，Accelerateフレームワーク内のlapackは
+clapackであるため)
+
+Accelerateフレームワークを使用しない場合は，
+Makefile内の変数OSX_ACCEについて
+
+OSX_ACCE = no
+
+としてください．
+
 make libraryでライブラリのビルドのみ，
 make testでテストプログラムのみコンパイルします．
 実行ファイルはtestsに生成されます．
+
+Wikiのトップページにあるサンプルプログラムをコンパイルするには，
+ヘッダ及び環境変数LD_LIBRARY_PATH(OSXではDYLD_LIBRARY_PATH)に
+パスを通した上で
+
+gcc -o sample sample.c -lbksp
+
+等とコマンドを入力します．
