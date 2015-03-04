@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include <mkl.h>
+#include <string.h>
+#include "bksp_internal.h"
 #include "bksp.h"
 
 int dcr (dspmat *mat, double *b,
@@ -21,13 +22,13 @@ int dcr (dspmat *mat, double *b,
     tmp = (double *) malloc(n * sizeof(double));
 
     mkl_cspblas_dcsrsymv("l", mat->row_size, mat->value,
-                   mat->I, mat->J, x, tmp);
+                   mat->row, mat->col, x, tmp);
     cblas_dscal(n, -1, tmp, 1);
     cblas_daxpy(n, 1, b, 1, tmp, 1);
     cblas_dcopy(n, tmp, 1, r, 1);
     cblas_dcopy(n, r, 1, p, 1);
     mkl_cspblas_dcsrsymv("l", mat->row_size, mat->value,
-                   mat->I, mat->J, r, tmp);
+                   mat->row, mat->col, r, tmp);
     cblas_dcopy(n, tmp, 1, ap, 1);
     r_dot_old = cblas_ddot(n, r, 1, tmp, 1);
     norm_b = cblas_dnrm2(n, b, 1);
@@ -45,7 +46,7 @@ int dcr (dspmat *mat, double *b,
 
         // Compute A * r.
         mkl_cspblas_dcsrsymv("l", mat->row_size, mat->value,
-                     mat->I, mat->J, r, tmp);
+                     mat->row, mat->col, r, tmp);
 
         // Compute beta.
         r_dot = cblas_ddot(n, r, 1, tmp, 1);

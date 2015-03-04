@@ -24,8 +24,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <mkl.h>
 #include "mmio.h"
+#include "bksp_internal.h"
 #include "bksp.h"
 
 dspmat *read_matrix_market(char *filename){
@@ -33,7 +33,7 @@ dspmat *read_matrix_market(char *filename){
     MM_typecode matcode;
     FILE *f;
     int M, N, nz;   
-    int i, *I, *J;
+    int i, *row, *col;
     double *val;
     dspmat *mat;
     int *row_size, *col_size, *nnz;
@@ -72,8 +72,8 @@ dspmat *read_matrix_market(char *filename){
 
     /* reseve memory for matrices */
 
-    I = (int *) malloc(nz * sizeof(int));
-    J = (int *) malloc(nz * sizeof(int));
+    row = (int *) malloc(nz * sizeof(int));
+    col = (int *) malloc(nz * sizeof(int));
     val = (double *) malloc(nz * sizeof(double));
 
 
@@ -83,9 +83,9 @@ dspmat *read_matrix_market(char *filename){
 
     for (i=0; i<nz; i++)
     {
-        fscanf(f, "%d %d %lg\n", &I[i], &J[i], &val[i]);
-        I[i]--;  /* adjust from 1-based to 0-based */
-        J[i]--;
+        fscanf(f, "%d %d %lg\n", &row[i], &col[i], &val[i]);
+        row[i]--;  /* adjust from 1-based to 0-based */
+        col[i]--;
     }
 
     if (f !=stdin) fclose(f);
@@ -93,8 +93,8 @@ dspmat *read_matrix_market(char *filename){
     *row_size = M;
     *col_size = N;
     *nnz = nz;
-    mat->I = I;
-    mat->J = J;
+    mat->row = row;
+    mat->col = col;
     mat->nnz = nnz;
     mat->row_size = row_size;
     mat->col_size = col_size;
@@ -113,25 +113,52 @@ dspmat *read_matrix_market(char *filename){
 }
 
 int coo2csr(dspmat *mat) {
-    MKL_INT *n, *ja, *ia, *nnz, *row_ind, *col_ind, info;
+    MKL_INT *n, *ja, *ia, *nnz, *row_ind, *col_ind;
     double *Acsr, *Acoo;
-    MKL_INT job[] = {1,0,0,0,*mat->nnz,0};
+    //MKL_INT job[] = {1,0,0,0,*mat->nnz,0};
     n = mat->row_size;
-    ja = (int *)malloc((*mat->nnz) * sizeof(int));
-    ia = (int *)malloc((*n + 1) * sizeof(int));
+    ja = (int *)calloc((*mat->nnz), sizeof(int));
+    ia = (int *)calloc((*n + 1), sizeof(int));
     Acsr = (double *)malloc((*mat->nnz) * sizeof(double));
     Acoo = mat->value;
     nnz = mat->nnz;
-    row_ind = mat->I;
-    col_ind = mat->J;
+    row_ind = mat->row;
+    col_ind = mat->col;
 
+    /*
     mkl_dcsrcoo(job, n, Acsr, ja, ia, nnz, Acoo, row_ind, col_ind, &info);
-
     if(info != 0){
-        return 1;
+        return -1;
     }
-    mat->I = ia;
-    mat->J = ja;
+    */
+    
+    int i, tmp1, tmp2;
+    for (i = 0; i < *nnz; i++) {
+        ia[row_ind[i]]++;
+    }
+    for (i = 0, tmp2 = 0; i < *n; i++) {
+        tmp1 = ia[i];
+        ia[i] = tmp2;
+        tmp2 += tmp1;
+    }
+    ia[*n] = *nnz;
+
+    for (i = 0; i < *nnz; i++) {
+        tmp1 = row_ind[i];
+        tmp2 = ia[tmp1];
+        ja[tmp2] = col_ind[i];
+        Acsr[tmp2] = Acoo[i];
+        ia[tmp1]++;
+    }
+
+    for (i = 0, tmp2 = 0; i <= *n; i++) {
+        tmp1 = ia[i];
+        ia[i] = tmp2;
+        tmp2 = tmp1;
+    }
+
+    mat->row = ia;
+    mat->col = ja;
     mat->value = Acsr;
     mat->format = "csr";
 

@@ -7,7 +7,7 @@
     matrix A explicitly (I call it "Block BiCGSTAB(l)-RH").
 *****/
 
-#include <mkl.h>
+#include "bksp_internal.h"
 #include <stdio.h>
 #include "bksp.h"
 
@@ -48,10 +48,10 @@ int dblbicgstabl (dspmat *A, dmat *B, int l, double tol,
     row_ptr = (int *)malloc((m + 1) * sizeof(int));
     col_ind = (int *)malloc((*A->nnz) * sizeof(int));
     for (i = 0; i < m + 1; i++) {
-        row_ptr[i] = A->I[i] + 1;
+        row_ptr[i] = A->row[i] + 1;
     }
     for (i = 0; i < *A->nnz; i++) {
-        col_ind[i] = A->J[i] + 1;
+        col_ind[i] = A->col[i] + 1;
     }
     for (i = 0; i < 2 * (l + 1); i++) {
         PV[i] = &PV_base[i * m * n];

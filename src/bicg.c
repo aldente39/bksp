@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <mkl.h>
+#include "bksp_internal.h"
 #include "bksp.h"
 
 int dbicg (dspmat *mat, double *b,
@@ -19,7 +19,7 @@ int dbicg (dspmat *mat, double *b,
 
     double *tmp = (double *) malloc(n * sizeof(double));
     mkl_cspblas_dcsrgemv("n", mat->row_size, mat->value,
-                   mat->I, mat->J, x, tmp);
+                   mat->row, mat->col, x, tmp);
     cblas_dscal(n, -1, tmp, 1);
     cblas_daxpy(n, 1, b, 1, tmp, 1);
     cblas_dcopy(n, tmp, 1, r, 1);
@@ -33,11 +33,11 @@ int dbicg (dspmat *mat, double *b,
     for (i = 0; i < max_iter; i++) {
         // Compute A * p.
         mkl_cspblas_dcsrgemv("n", mat->row_size, mat->value,
-                     mat->I, mat->J, p, ap);
+                     mat->row, mat->col, p, ap);
 
         // Compute A^{T} * sp.
         mkl_cspblas_dcsrgemv("t", mat->row_size, mat->value,
-                     mat->I, mat->J, sp, atp);
+                     mat->row, mat->col, sp, atp);
 
         // Compute alpha.
         alpha = r_dot_old / cblas_ddot(n, ap, 1, sp, 1);

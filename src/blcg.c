@@ -7,8 +7,9 @@
     the residual matrix R.
 *****/
 
-#include <mkl.h>
+#include "bksp_internal.h"
 #include <stdio.h>
+#include <string.h>
 #include "bksp.h"
 
 int dblcg (dspmat *A, dmat *B, double tol,
@@ -20,7 +21,7 @@ int dblcg (dspmat *A, dmat *B, double tol,
 
     ////////// Initialization //////////
     int i, m, n;
-    double omega, fnb, error;
+    double fnb, error;
     char *matdescra = "SLNF";
     double *alpha, *beta, *C, *base0;
     double *P, *V, *ap, *tmp, *base1;
@@ -41,10 +42,10 @@ int dblcg (dspmat *A, dmat *B, double tol,
     row_ptr = (int *)malloc((m + 1) * sizeof(int));
     col_ind = (int *)malloc((*A->nnz) * sizeof(int));
     for (i = 0; i <= m; i++) {
-        row_ptr[i] = A->I[i] + 1;
+        row_ptr[i] = A->row[i] + 1;
     }
     for (i = 0; i < *A->nnz; i++) {
-        col_ind[i] = A->J[i] + 1;
+        col_ind[i] = A->col[i] + 1;
     }
 
     double one = 1;

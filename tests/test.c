@@ -1,16 +1,16 @@
 #include <stdio.h>
 #include <math.h>
 #include "bksp.h"
-#include <mkl.h>
 #include <time.h>
 #include <string.h>
+#include "bksp_internal.h"
 
 double norm_true_res(dspmat *A, double *b, double *x) {
     double ans;
     int n = *(A->row_size);
     double *tmp = (double *) malloc(n * sizeof(double));
     mkl_cspblas_dcsrgemv("n", A->row_size, A->value,
-                         A->I, A->J, x, tmp);
+                         A->row, A->col, x, tmp);
     cblas_dscal(n, -1, tmp, 1);
     cblas_daxpy(n, 1, b, 1, tmp, 1);
     ans = cblas_dnrm2(n, tmp, 1) / cblas_dnrm2(n, b, 1);
@@ -24,7 +24,7 @@ double norm_true_res_symmetric(dspmat *A, double *b, double *x) {
     int n = *(A->row_size);
     double *tmp = (double *) malloc(n * sizeof(double));
     mkl_cspblas_dcsrsymv("l", A->row_size, A->value,
-                         A->I, A->J, x, tmp);
+                         A->row, A->col, x, tmp);
     cblas_dscal(n, -1, tmp, 1);
     cblas_daxpy(n, 1, b, 1, tmp, 1);
     ans = cblas_dnrm2(n, tmp, 1) / cblas_dnrm2(n, b, 1);
@@ -38,7 +38,7 @@ double norm_true_res_shift(dspmat *A, double *b, double sigma, double *x) {
     int n = *(A->row_size);
     double *tmp = (double *) malloc(n * sizeof(double));
     mkl_cspblas_dcsrgemv("n", A->row_size, A->value,
-                         A->I, A->J, x, tmp);
+                         A->row, A->col, x, tmp);
     cblas_dscal(n, -1, tmp, 1);
     cblas_daxpy(n, 1, b, 1, tmp, 1);
     cblas_daxpy(n, - sigma, x, 1, tmp, 1);
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    char f[] = "";
+    char f[256] = "";
     strcat(f, argv[1]);
     dspmat *mat = read_matrix_market(f);
     printf("fnorm is %f\n", sp_norm_f(mat));
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     printf("size: %d, %d \ntype: %s\n",
            *mat->row_size, *mat->col_size, mat->type);fflush(stdout);
 
-    int i, j;
+    int i;
     const int n = dspmat_rowsize(mat);
     const int s = 16;
     double *bb = (double *)calloc(sizeof(double), n * s * sizeof(double));
@@ -148,6 +148,7 @@ int main(int argc, char *argv[]) {
         printf("The Block CG Method converged at iteration %d.\n", code);
     }
     printf("\n");
+    printf("%f\n", cblas_dnrm2(*m2->row_size * vn, X_CG->value, 1));
     dmat_free(B_CG);
     dmat_free(X_CG);
     

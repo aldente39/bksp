@@ -6,7 +6,7 @@
     the direction matrix P.
 *****/
 
-#include <mkl.h>
+#include "bksp_internal.h"
 #include <stdio.h>
 #include "bksp.h"
 
@@ -36,16 +36,16 @@ int dblbicgstab (dspmat *A, dmat *B, double tol,
     row_ptr = (int *)malloc((m + 1) * sizeof(int));
     col_ind = (int *)malloc((*A->nnz) * sizeof(int));
     for (i = 0; i <= m; i++) {
-        row_ptr[i] = A->I[i] + 1;
+        row_ptr[i] = A->row[i] + 1;
     }
     for (i = 0; i < *A->nnz; i++) {
-        col_ind[i] = A->J[i] + 1;
+        col_ind[i] = A->col[i] + 1;
     }
 
     double one = 1;
     double mone = -1;
     double zero = 0;
-    //dcsrmm0('n', m, n, A->value, A->I, A->J, *A->nnz, X->value, tmp);
+    //dcsrmm0('n', m, n, A->value, A->row, A->col, *A->nnz, X->value, tmp);
     mkl_dcsrmm("n", &m, &n, &m, &mone, matdescra, A->value,
                col_ind, row_ptr, &row_ptr[1], X->value, &m, &zero, tmp, &m);
     cblas_daxpy(m * n, 1, B->value, 1, tmp, 1);
@@ -57,7 +57,7 @@ int dblbicgstab (dspmat *A, dmat *B, double tol,
     ////////// Iteration //////////
     for (i = 0; i < max_iter; i++) {
         // Compute V = A * P.
-        //dcsrmm0('n', m, n, A->value, A->I, A->J, *A->nnz, P, V);
+        //dcsrmm0('n', m, n, A->value, A->row, A->col, *A->nnz, P, V);
         mkl_dcsrmm("n", &m, &n, &m, &one, matdescra, A->value,
             col_ind, row_ptr, &row_ptr[1], P, &m, &zero, V, &m);
 

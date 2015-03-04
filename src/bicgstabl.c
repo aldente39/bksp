@@ -4,9 +4,9 @@
     is the BiCGSTAB(l) method.
 *****/
 
-#include <mkl.h>
 #include "bksp.h"
 #include <stdio.h>
+#include "bksp_internal.h"
 
 int dbicgstabl (dspmat *A, double *b, int l, double tol,
                                        int max_iter, double *x) {
@@ -40,7 +40,7 @@ int dbicgstabl (dspmat *A, double *b, int l, double tol,
     tau = (double *) malloc(l2 * l2 * sizeof(double));
 
     mkl_cspblas_dcsrgemv("n", A->row_size, A->value,
-                            A->I, A->J, x, tmp);
+                            A->row, A->col, x, tmp);
     cblas_dscal(n, -1, tmp, 1);
     cblas_daxpy(n, 1, b, 1, tmp, 1);
     cblas_dcopy(n, tmp, 1, r[0], 1);
@@ -64,7 +64,7 @@ int dbicgstabl (dspmat *A, double *b, int l, double tol,
                 cblas_daxpy(n, 1, r[i], 1, p[i], 1);
             }
             mkl_cspblas_dcsrgemv("n", A->row_size, A->value,
-                                    A->I, A->J, p[j], p[j + 1]);
+                                    A->row, A->col, p[j], p[j + 1]);
 
             alpha = gamma1 / cblas_ddot(n, rs, 1, p[j + 1], 1);
 
@@ -72,7 +72,7 @@ int dbicgstabl (dspmat *A, double *b, int l, double tol,
                 cblas_daxpy(n, -alpha, p[i + 1], 1, r[i], 1);
             }
             mkl_cspblas_dcsrgemv("n", A->row_size, A->value,
-                                    A->I, A->J, r[j], r[j + 1]);
+                                    A->row, A->col, r[j], r[j + 1]);
 
             cblas_daxpy(n, alpha, p[0], 1, x, 1);
         }
