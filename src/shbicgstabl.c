@@ -10,7 +10,7 @@ int *dhorner (double *gamma, int l, double sigma, double *out) {
     out[l] = - gamma[l - 1];
 
     for (i = l - 1; i > 0; i--) {
-        out[i] = - sigma * out[i + 1] - gamma[i - 1];
+        out[i] = - sigma * out[i + 1] - gamma[i];
     }
 
     out[0] = - sigma * out[1] + 1.0;
@@ -247,7 +247,7 @@ int dshbicgstabl (dspmat *mat, double *b, int l, double *sigma,
             for (j = 0; j < l; j++) {
                 tmp[0] = 0;
                 for (i = j; i < l; i++) {
-                    tmp[0] += M[k][i * l + j] * omega_shift[i];
+                    tmp[0] += M[k][j * l + i] * omega_shift[i];
                 }
                 omega_shift_d[j] = tmp[0];
             }
@@ -255,7 +255,7 @@ int dshbicgstabl (dspmat *mat, double *b, int l, double *sigma,
             for (j = 0; j < l - 1; j++) {
                 tmp[0] = 0;
                 for (i = j + 1; i < l - 1; i++) {
-                    tmp[0] += tau[i * l + j] * omega_shift_d[i + 1];
+                    tmp[0] += tau[j * l + i] * omega_shift_d[i + 1];
                 }
                 omega_shift_dd[j] = omega_shift_d[j + 1] + tmp[0];
             }
