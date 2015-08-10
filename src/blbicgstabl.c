@@ -44,7 +44,7 @@ int dblbicgstabl (dspmat *A, dmat *B, int l, double tol,
     Rs = (double *)malloc(m * n * sizeof(double));
     V = (double **)malloc((l + 1) * sizeof(double));
     R_base = (double *)malloc((l + 1) * m * n * sizeof(double));
-    PV_base = (double *)malloc(2 * (l + 1) * m * n * sizeof(double));
+    PV_base = (double *)calloc(sizeof(double), 2 * (l + 1) * m * n);
     row_ptr = (int *)malloc((m + 1) * sizeof(int));
     col_ind = (int *)malloc((*A->nnz) * sizeof(int));
     for (i = 0; i < m + 1; i++) {
@@ -73,7 +73,7 @@ int dblbicgstabl (dspmat *A, dmat *B, int l, double tol,
     }
     ipiv = (int *)malloc(n * n * sizeof(int));
 
-    double *tmp = (double *) malloc(m * n * sizeof(double));
+    double *tmp = (double *)calloc(sizeof(double), m * n);
     double one = 1;
     double mone = -1;
     double zero = 0;
@@ -232,6 +232,11 @@ int dblbicgstabl (dspmat *A, dmat *B, int l, double tol,
     free(gamma0);
     free(t);
     free(xi);
+    free(omega_dd);
+    free(omega_d);
+    free(omega);
+    free(R_base);
+    free(PV_base);
     
     if (error >= tol) {
         return -1;
