@@ -68,7 +68,7 @@ $(BUILD_DIR) :
 	mkdir -p $(BUILD_DIR)
 
 $(BUILD_DIR)/$(TARGET) : $(OBJS)
-	ld $(LD_ARG) -o ./$(BUILD_DIR)/$(TARGET)$(DLIBTYPE) $(OBJS) $(OTHERLIBS) -lc
+	ld $(LD_ARG) -o $(CURRENT_DIR)/$(BUILD_DIR)/$(TARGET)$(DLIBTYPE) $(OBJS) $(OTHERLIBS) -lc
 	ar rcs ./$(BUILD_DIR)/$(TARGET).a $(OBJS)
 
 ./$(OBJ_DIR)/%.o : ./$(SRC_DIR)/%.c
