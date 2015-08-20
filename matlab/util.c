@@ -1,8 +1,9 @@
 #include <string.h>
+#include <complex.h>
 #include <mex.h>
 #include "bksp.h"
 
-void MATLABMatrix_to_CSRMatrix (const mxArray *MATLABmat, dspmat *mat) {
+void MATLABMatrix2dCSRMatrix (const mxArray *MATLABmat, dspmat *mat) {
 
     mwIndex *row, *col;
     int size, i;
@@ -22,7 +23,7 @@ void MATLABMatrix_to_CSRMatrix (const mxArray *MATLABmat, dspmat *mat) {
     *mat->row_size = size;
     *mat->col_size = size;
     mat->value = mxGetPr(spMat);
-    mat->format = "CRS";
+    mat->format = "CSR";
 
     for (i = 0; i < *mat->nnz; i++) {
         mat->col[i] = (int)col[i];
@@ -30,6 +31,47 @@ void MATLABMatrix_to_CSRMatrix (const mxArray *MATLABmat, dspmat *mat) {
     for (i = 0; i <= size; i++) {
         mat->row[i] = (int)row[i];
     }
+}
+
+void MATLABMatrix2zCSRMatrix (const mxArray *MATLABmat, zspmat *mat) {
+
+    mwIndex *row, *col;
+    int size, i;
+    mxArray *spMat;
+    double *re, *im;
+    double _Complex *v;
+    mexCallMATLAB(1, &spMat,
+                  1, (mxArray **)&MATLABmat, "transpose");
+
+    re = mxGetPr(spMat);
+    im = mxGetPi(spMat);
+
+    size = (int)mxGetM(spMat);
+    mat->nnz = (int *)(mxGetJc(spMat) + mxGetN(spMat));
+    row = mxGetJc(spMat);
+    col = mxGetIr(spMat);
+    mat->row = (int *)malloc(sizeof(int) * (size + 1));
+    mat->col = (int *)malloc(sizeof(int) * (*mat->nnz));
+
+    mat->row_size = (int *)malloc(sizeof(int));
+    mat->col_size = (int *)malloc(sizeof(int));
+    *mat->row_size = size;
+    *mat->col_size = size;
+    mat->format = "CSR";
+
+    for (i = 0; i < *mat->nnz; i++) {
+        mat->col[i] = (int)col[i];
+    }
+    for (i = 0; i <= size; i++) {
+        mat->row[i] = (int)row[i];
+    }
+
+    v = (double _Complex *)malloc(sizeof(double _Complex) * (*mat->nnz));
+    for(i = 0; i < *mat->nnz; i++) {
+        v[i] = re[i] + im[i] * _Complex_I;
+    }
+    mat->value = v;
+        
 }
 
 void check_coefficient_and_rhs (const mxArray *A, const mxArray *b,
