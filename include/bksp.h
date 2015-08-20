@@ -174,13 +174,13 @@ int zbicgstabl(zspmat *A, double _Complex *b, int ell,
 
 ////////// Block Krylov subspace methods //////////
 
-//int zblbicgstabl(zspmat *A, zmat *b, int ell,
-//                 double tol, int max_iter, zmat *x);
+int zblbicgstabl(zspmat *A, zmat *b, int ell,
+                 double tol, int max_iter, zmat *x);
 
 ////////// Krylov subspace methods for shifted systems //////////
 
-//int zshbicgstabl(zspmat *A, double _Complex *b, int l, double _Complex *sigma,
-//                 int sigma_size, double tol, int max_iter, double _Complex *x);
+int zshbicgstabl(zspmat *A, double _Complex *b, int l, double _Complex *sigma,
+                 int sigma_size, double tol, int max_iter, double _Complex *x);
 
 ////////// Block Krylov subspace methods for shifted systems //////////
 
