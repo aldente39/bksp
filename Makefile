@@ -12,6 +12,10 @@ LAPACK_NAME = lapacke
 LAPACK_DIR = /usr/local/Cellar/lapack/3.5.0/lib
 LAPACK_INCLUDE_DIR = /usr/local/Cellar/lapack/3.5.0/include
 
+### If you want don't want to use OpenBLAS,
+### rewrite "USE_OPENBLAS = yes" to "USE_OPENBLAS = no"
+USE_OPENBLAS = yes
+
 ### In Mac OSX, if you don't want to use blas provided by Apple,
 ### rewrite "OSX_ACCE = yes" to "OSX_ACCE = no".
 OSX_ACCE = yes
@@ -44,7 +48,6 @@ ifeq ($(UNAME), Darwin)
 	endif
 	DLIBTYPE = .dylib
 	OSX = -DOSX
-	LD_ARG = -dylib
 else
 	OTHERLIBS =  -L$(BLAS_DIR) -l$(BLAS_NAME) -L$(LAPACK_DIR) -l$(LAPACK_NAME)
 endif
@@ -54,6 +57,10 @@ ifeq ($(mkl), no)
 else
 	CFLAGS = $(FLAGS) -mkl $(OSX)
 	OTHERLIBS = -L$(MKLROOT)/../compiler/lib/intel64  -L$(MKLROOT)/lib/intel64 -lmkl_intel_lp64 -lmkl_core -lmkl_intel_thread -lpthread -liomp5
+endif
+
+ifeq ($(USE_OPENBLAS), yes)
+	CFLAGS := $(CFLAGS) -DOPENBLAS
 endif
 
 
@@ -68,7 +75,7 @@ $(BUILD_DIR) :
 	mkdir -p $(BUILD_DIR)
 
 $(BUILD_DIR)/$(TARGET) : $(OBJS)
-	ld $(LD_ARG) -o $(CURRENT_DIR)/$(BUILD_DIR)/$(TARGET)$(DLIBTYPE) $(OBJS) $(OTHERLIBS) -lc
+	$(CC) $(LD_ARG) -o $(CURRENT_DIR)/$(BUILD_DIR)/$(TARGET)$(DLIBTYPE) $(OBJS) $(OTHERLIBS)
 	ar rcs ./$(BUILD_DIR)/$(TARGET).a $(OBJS)
 
 ./$(OBJ_DIR)/%.o : ./$(SRC_DIR)/%.c

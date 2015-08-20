@@ -26,6 +26,7 @@ typedef struct {
     double *value;
 } dmat;
 
+////////// Utilities //////////
 
 static inline int dspmat_rowsize(dspmat *mat) {
     return *mat->row_size;
@@ -37,7 +38,6 @@ static inline int dspmat_colsize(dspmat *mat) {
 
 static inline int dmat_set (dmat *mat, int m, int n, double num) {
     mat->value[n * mat->row_size + m] = num;
-
     return 0;
 }
 
@@ -45,7 +45,17 @@ static inline double dmat_get (dmat *mat, int m, int n) {
     return mat->value[n * mat->row_size + m];
 }
 
-////////// Utilities //////////
+static inline int dmat_rowsize (dmat *mat) {
+    return mat->row_size;
+}
+
+static inline int dmat_colsize (dmat *mat) {
+    return mat->col_size;
+}
+
+static inline double* dmat_value (dmat *mat) {
+    return mat->value;
+}
 
 dspmat *read_matrix_market(char *filename);
 //int coo2csr(dspmat *mat);
@@ -54,10 +64,6 @@ dmat *dmat_create(int m, int n);
 int darray2dmat(double *arr, int row_size, int col_size, dmat *mat);
 int dmat_free(dmat *mat);
 int dvec2mat(double *x, int m, dmat *mat);
-//static inline int dmat_set(int m, int n, dmat *mat, double num);
-//static inline double dmat_get(int m, int n, dmat *mat);
-
-double sp_norm_f(dspmat *A);
 
 
 ////////// Krylov subspace methods //////////
@@ -101,3 +107,81 @@ int dshbicgstabl(dspmat *A, double *b, int l, double *sigma,
 
 //TODO
 
+
+///// For complex numbers
+
+////////// Structs //////////
+
+typedef struct {
+    int *row; /// Information about row
+    int *col; /// Information about column
+    int *nnz;
+    int *row_size;
+    int *col_size;
+    double _Complex *value;
+    char *format;
+    char *type;
+} zspmat;
+
+typedef struct {
+    int row_size;
+    int col_size;
+    double _Complex *value;
+} zmat;
+
+////////// Utilities //////////
+
+static inline int zspmat_rowsize(zspmat *mat) {
+    return *mat->row_size;
+}
+
+static inline int zspmat_colsize(zspmat *mat) {
+    return *mat->col_size;
+}
+
+static inline int zmat_set (zmat *mat, int m, int n, double _Complex *num) {
+    mat->value[n * mat->row_size + m] = *num;
+    return 0;
+}
+
+static inline double zmat_get (zmat *mat, int m, int n) {
+    return mat->value[n * mat->row_size + m];
+}
+
+static inline int zmat_rowsize (zmat *mat) {
+    return mat->row_size;
+}
+
+static inline int zmat_colsize (zmat *mat) {
+    return mat->col_size;
+}
+
+static inline double _Complex* zmat_value (zmat *mat) {
+    return mat->value;
+}
+
+zspmat *zread_matrix_market(char *filename);
+int zqreco(int m, int n, double _Complex *mat, double _Complex *r);
+zmat *zmat_create(int m, int n);
+int zmat_free(zmat *mat);
+
+////////// Krylov subspace methods //////////
+
+int zbicg(zspmat *A, double _Complex *b,
+          double tol, int max_iter, double _Complex *x);
+int zbicgstabl(zspmat *A, double _Complex *b, int ell,
+          double tol, int max_iter, double _Complex *x);
+
+////////// Block Krylov subspace methods //////////
+
+//int zblbicgstabl(zspmat *A, zmat *b, int ell,
+//                 double tol, int max_iter, zmat *x);
+
+////////// Krylov subspace methods for shifted systems //////////
+
+//int zshbicgstabl(zspmat *A, double _Complex *b, int l, double _Complex *sigma,
+//                 int sigma_size, double tol, int max_iter, double _Complex *x);
+
+////////// Block Krylov subspace methods for shifted systems //////////
+
+// TODO

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "bksp.h"
+#include "bksp_internal.h"
 
 dmat *dmat_create (int m, int n) {
     int i, l;
@@ -66,4 +67,22 @@ int dvec2mat (double *x, int m, dmat *mat) {
 }
 
 
+////////// For complex numbers //////////
 
+zmat *zmat_create (int m, int n) {
+    zmat *mat = (zmat *)malloc(sizeof(zmat));
+    double _Complex *value = (double _Complex*)calloc(sizeof(double _Complex),
+                                                      m * n);
+    mat->row_size = m;
+    mat->col_size = n;
+    mat->value = value;
+
+    return mat;
+}
+
+int zmat_free (zmat *mat) {
+    free(mat->value);
+    free(mat);
+
+    return 0;
+}
